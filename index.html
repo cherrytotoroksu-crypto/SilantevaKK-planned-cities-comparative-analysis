@@ -7,6 +7,26 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<style>
+  .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
+    background-clip: padding-box;
+  }
+  .marker-cluster-small div  { background-color: rgba(110,204,57,0.7);  }
+  .marker-cluster-small      { background-color: rgba(110,204,57,0.4);  }
+  .marker-cluster-medium div { background-color: rgba(240,194,12,0.7);  }
+  .marker-cluster-medium     { background-color: rgba(240,194,12,0.4);  }
+  .marker-cluster-large div  { background-color: rgba(241,128,23,0.7);  }
+  .marker-cluster-large      { background-color: rgba(241,128,23,0.4);  }
+  .city-dot-tooltip {
+    background: rgba(0,0,0,0.75); color: #fff;
+    border: none; border-radius: 5px; font-size: 11px; padding: 3px 7px;
+    white-space: nowrap; box-shadow: none;
+  }
+  .city-dot-tooltip::before { display: none; }
+</style>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', Arial, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #1a1a2e; }
@@ -437,6 +457,84 @@ function filterCities(q) {
 }
 
 buildSidebar();
+
+// ── Кластерные маркеры ────────────────────────────────────────────────────────
+const clusterGroup = L.markerClusterGroup({
+  maxClusterRadius: 50,
+  iconCreateFunction: function(cluster) {
+    const children = cluster.getAllChildMarkers();
+    // Считаем доминирующую траекторию в кластере
+    const counts = {};
+    children.forEach(m => {
+      const t = m.options.traj || "Символические";
+      counts[t] = (counts[t] || 0) + 1;
+    });
+    const dominant = Object.entries(counts).sort((a,b) => b[1]-a[1])[0][0];
+    const color = {
+      "Состоявшиеся": "#27ae60",
+      "Активно формирующиеся": "#2980b9",
+      "Ранняя стадия (набирающие)": "#f39c12",
+      "Символические": "#e74c3c"
+    }[dominant] || "#888";
+    const n = cluster.getChildCount();
+    const size = n > 10 ? 44 : n > 5 ? 36 : 28;
+    return L.divIcon({
+      html: `<div style="
+        width:${size}px;height:${size}px;border-radius:50%;
+        background:${color}cc;border:2px solid ${color};
+        display:flex;align-items:center;justify-content:center;
+        font-size:${n>9?11:13}px;font-weight:700;color:#fff;
+        box-shadow:0 2px 8px rgba(0,0,0,0.3);
+      ">${n}</div>`,
+      className: '',
+      iconSize: [size, size],
+      iconAnchor: [size/2, size/2]
+    });
+  },
+  spiderfyOnMaxZoom: true,
+  showCoverageOnHover: false,
+  zoomToBoundsOnClick: true
+});
+
+GEOJSON.features.forEach(feature => {
+  const p = feature.properties;
+  // Вычисляем центроид из геометрии
+  const center = L.geoJSON(feature).getBounds().getCenter();
+
+  const color = p.color || "#888";
+  const marker = L.circleMarker([center.lat, center.lng], {
+    radius: 7,
+    fillColor: color,
+    color: "#fff",
+    weight: 1.5,
+    fillOpacity: 0.9,
+    traj: p.traj
+  });
+
+  marker.bindTooltip(
+    `<b>${p.name_en}</b><br>${p.country_ru}`,
+    { className: 'city-dot-tooltip', direction: 'top', offset: [0, -6] }
+  );
+
+  marker.on('click', function(e) {
+    // Зум к полигону и открываем попап
+    const entry = layerMap[p.layer];
+    if (entry) {
+      map.fitBounds(entry.leaflet.getBounds().pad(0.4));
+      setTimeout(() => {
+        const popup = L.popup({ maxWidth: 420 })
+          .setLatLng(center)
+          .setContent(buildPopupHTML(p))
+          .openOn(map);
+        setTimeout(() => renderPopupChart(p), 50);
+      }, 400);
+    }
+  });
+
+  clusterGroup.addLayer(marker);
+});
+
+map.addLayer(clusterGroup);
 </script>
 </body>
 </html>
