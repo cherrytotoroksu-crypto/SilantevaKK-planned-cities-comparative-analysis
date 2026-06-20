@@ -233,7 +233,12 @@ function fmtPop(v) {
 function buildPopupHTML(p) {
   const color = p.color;
   const traj = p.traj || "—";
-  const trajShort = traj.replace(" (набирающие)", "");
+  const trajShort = (
+    traj.startsWith("Состоявшиеся") ? "Состоявшиеся" :
+    traj.startsWith("Активно")      ? "Активно формирующиеся" :
+    traj.startsWith("Ранняя")       ? "Ранняя стадия" :
+                                      "Символические"
+  );
 
   const plannerRu = {
     "Public": "Государственный",
