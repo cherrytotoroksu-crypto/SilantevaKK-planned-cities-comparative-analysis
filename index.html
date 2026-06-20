@@ -248,6 +248,7 @@ function buildPopupHTML(p) {
     <div class="popup-item"><div class="label">Факт. население (2025)</div><div class="value">${fmtPop(p.pop_2025)}</div></div>
     <div class="popup-item"><div class="label">Доля достижения плана</div><div class="value">${p.achv_ratio != null ? (p.achv_ratio*100).toFixed(1)+"%" : "—"}</div></div>
     <div class="popup-item"><div class="label">Режим (V-Dem, 2023)</div><div class="value">${regimeBin(p.regime_ru)}</div></div>
+    <div class="popup-item"><div class="label">Свобода (Freedom House, 2023)</div><div class="value">${p.fh_ru||"—"}</div></div>
     <div class="popup-item"><div class="label">Застройка DW (${p.dw_built_first_yr||""}→${p.dw_built_last_yr||""})</div><div class="value">${fmt(p.dw_built_first,1)}% → ${fmt(p.dw_built_last,1)}%</div></div>
     <div class="popup-item"><div class="label">VIIRS (${p.viirs_first_yr||""}→${p.viirs_last_yr||""})</div><div class="value">${fmt(p.viirs_first,2)} → ${fmt(p.viirs_last,2)} нт</div></div>
     <div class="popup-item wide"><div class="label">Ближайший крупный город</div><div class="value">${p.near_city||"—"} — ${fmt(p.dist_road)} км (авто) / ${fmt(p.dist_straight)} км (прямая)</div></div>
