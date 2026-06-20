@@ -211,6 +211,11 @@ function fmtYear(v) {
   if (v == null || v === "") return "—";
   return Math.round(v).toString();
 }
+function regimeBin(r) {
+  if (!r) return "—";
+  if (r.toLowerCase().includes("демократ")) return "Демократический";
+  return "Авторитарный";
+}
 function fmtPop(v) {
   if (v == null) return "—";
   if (v >= 1e6) return (v/1e6).toFixed(2) + " млн";
@@ -242,7 +247,7 @@ function buildPopupHTML(p) {
     <div class="popup-item"><div class="label">Планируемое население</div><div class="value">${fmtPop(p.planned_pop)}</div></div>
     <div class="popup-item"><div class="label">Факт. население (2025)</div><div class="value">${fmtPop(p.pop_2025)}</div></div>
     <div class="popup-item"><div class="label">Доля достижения плана</div><div class="value">${p.achv_ratio != null ? (p.achv_ratio*100).toFixed(1)+"%" : "—"}</div></div>
-    <div class="popup-item"><div class="label">Режим (Freedom House)</div><div class="value">${p.fh_ru||"—"}</div></div>
+    <div class="popup-item"><div class="label">Режим (V-Dem, 2023)</div><div class="value">${regimeBin(p.regime_ru)}</div></div>
     <div class="popup-item"><div class="label">Застройка DW (${p.dw_built_first_yr||""}→${p.dw_built_last_yr||""})</div><div class="value">${fmt(p.dw_built_first,1)}% → ${fmt(p.dw_built_last,1)}%</div></div>
     <div class="popup-item"><div class="label">VIIRS (${p.viirs_first_yr||""}→${p.viirs_last_yr||""})</div><div class="value">${fmt(p.viirs_first,2)} → ${fmt(p.viirs_last,2)} нт</div></div>
     <div class="popup-item wide"><div class="label">Ближайший крупный город</div><div class="value">${p.near_city||"—"} — ${fmt(p.dist_road)} км (авто) / ${fmt(p.dist_straight)} км (прямая)</div></div>
