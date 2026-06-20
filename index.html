@@ -164,11 +164,14 @@
   /* ── Кнопка-гамбургер (скрыта на десктопе) ─────────────────────────────── */
   #sidebar-toggle {
     display: none;
-    position: fixed; top: 10px; left: 10px; z-index: 3000;
-    background: #0F2D69; color: #fff; border: none; border-radius: 8px;
-    width: 42px; height: 42px; font-size: 22px; cursor: pointer;
+    position: fixed; top: 50%; transform: translateY(-50%);
+    left: 10px; z-index: 3000;
+    background: #0F2D69; color: #fff; border: none;
+    border-radius: 0 8px 8px 0;
+    width: 28px; height: 52px; font-size: 20px; cursor: pointer;
     align-items: center; justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+    box-shadow: 2px 2px 8px rgba(0,0,0,0.35);
+    transition: left 0.25s ease;
   }
   #map-overlay {
     display: none; position: fixed; inset: 0; z-index: 1999;
@@ -185,7 +188,8 @@
     }
     #sidebar.open { left: 0; }
     #map-overlay.active { display: block; }
-    #sidebar-toggle { display: flex; }
+    #sidebar-toggle { display: flex; left: 0; }
+    #sidebar.open ~ #sidebar-toggle { left: 280px; }
     .leaflet-top.leaflet-left { top: 60px !important; }
     .leaflet-popup-content-wrapper { max-width: calc(100vw - 16px); }
     .leaflet-popup-content { width: calc(100vw - 48px) !important; }
@@ -649,12 +653,15 @@ GEOJSON.features.forEach(feature => {
 map.addLayer(clusterGroup);
 
 function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
+  const sidebar = document.getElementById('sidebar');
+  const btn = document.getElementById('sidebar-toggle');
+  sidebar.classList.toggle('open');
   document.getElementById('map-overlay').classList.toggle('active');
+  btn.textContent = sidebar.classList.contains('open') ? '‹' : '›';
 }
 </script>
 
-<button id="sidebar-toggle" onclick="toggleSidebar()" aria-label="Меню">☰</button>
+<button id="sidebar-toggle" onclick="toggleSidebar()" aria-label="Меню">›</button>
 <div id="map-overlay" onclick="toggleSidebar()"></div>
 </body>
 </html>
