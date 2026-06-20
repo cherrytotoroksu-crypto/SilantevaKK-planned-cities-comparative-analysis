@@ -161,6 +161,29 @@
   .img-tab.active { background: #2c5282; color: #fff; border-color: #2c5282; }
   .img-panel img { width: 100%; border-radius: 4px; display: block; margin-top: 2px; }
 
+
+  /* ── Фильтры ──────────────────────────────────────────────────────────── */
+  #filter-bar { padding: 8px 10px 2px; border-bottom: 1px solid #C6C6C6; flex-shrink: 0; }
+  .filter-row { display: flex; align-items: flex-start; gap: 4px; margin-bottom: 5px; }
+  .filter-lbl { font-size: 9px; font-weight: 700; color: #929292; text-transform: uppercase;
+    letter-spacing: 0.4px; padding-top: 3px; min-width: 52px; flex-shrink: 0; }
+  .filter-chips { display: flex; flex-wrap: wrap; gap: 3px; }
+  .chip {
+    padding: 2px 7px; border-radius: 12px; border: 1px solid #C6C6C6;
+    background: #fff; color: #0F2D69; font-size: 10px; cursor: pointer;
+    font-family: inherit; transition: all 0.15s; line-height: 1.4;
+  }
+  .chip:hover { border-color: #0F2D69; background: #E6EAF4; }
+  .chip.act { background: #0F2D69; color: #fff; border-color: #0F2D69; }
+  #achv-toggle-row { margin-top: 6px; padding-top: 6px; border-top: 1px solid #ddd; }
+  #achv-toggle-row label { font-size: 10px; color: #555; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+  @media (prefers-color-scheme: dark) {
+    #filter-bar { background: #FCF2E6 !important; }
+    .chip { background: #fff !important; color: #0F2D69 !important; border-color: #C6C6C6 !important; }
+    .chip.act { background: #0F2D69 !important; color: #fff !important; }
+    #achv-toggle-row label { color: #444 !important; }
+  }
+
   /* ── Кнопка-гамбургер (скрыта на десктопе) ─────────────────────────────── */
   #sidebar-toggle {
     display: none;
@@ -207,6 +230,35 @@
     <img src="logos/hse.png" alt="ВШЭ" style="height:36px;width:auto;">
     <img src="logos/fgrr.png" alt="ФГРР" style="height:46px;width:auto;max-width:160px;object-fit:contain;">
   </div>
+  <div id="filter-bar">
+    <div class="filter-row">
+      <span class="filter-lbl">Регион</span>
+      <div class="filter-chips" data-filter="region">
+        <button class="chip act" data-val="">Все</button>
+        <button class="chip" data-val="Африка">🌍 Африка</button>
+        <button class="chip" data-val="Азия">🌏 Азия</button>
+        <button class="chip" data-val="Южная Америка">🌎 Ю. Ам.</button>
+      </div>
+    </div>
+    <div class="filter-row">
+      <span class="filter-lbl">Инициатор</span>
+      <div class="filter-chips" data-filter="planner">
+        <button class="chip act" data-val="">Все</button>
+        <button class="chip" data-val="Public">Гос.</button>
+        <button class="chip" data-val="Private">Частный</button>
+        <button class="chip" data-val="Public-Private Partnership">ГЧП</button>
+      </div>
+    </div>
+    <div class="filter-row">
+      <span class="filter-lbl">Свобода</span>
+      <div class="filter-chips" data-filter="fh">
+        <button class="chip act" data-val="">Все</button>
+        <button class="chip" data-val="Несвободная">Несвоб.</button>
+        <button class="chip" data-val="Частично свободная">Частично</button>
+        <button class="chip" data-val="Свободная">Своб.</button>
+      </div>
+    </div>
+  </div>
   <input id="search-box" type="text" placeholder="Поиск города..." oninput="filterCities(this.value)">
   <div class="all-toggle">
     <button onclick="toggleAll(true)">Показать все</button>
@@ -218,6 +270,7 @@
     <div class="leg-row"><div class="leg-dot" style="background:#2980b9"></div> Активно формирующиеся</div>
     <div class="leg-row"><div class="leg-dot" style="background:#f39c12"></div> Ранняя стадия</div>
     <div class="leg-row"><div class="leg-dot" style="background:#e74c3c"></div> Символические</div>
+    <div id="achv-toggle-row"><label><input type="checkbox" id="achv-toggle" onchange="toggleAchvMode(this.checked)"> Цвет по достижению цели</label></div>
   </div>
 </div>
 
@@ -259,8 +312,21 @@ baseLayers["Светлая (Positron)"].addTo(map);
 L.control.layers(baseLayers, {}, { position: 'topright', collapsed: false }).addTo(map);
 
 // ── Слои ─────────────────────────────────────────────────────────────────────
-const layerMap = {};  // layer_name → L.geoJSON
+const COUNTRY_FLAGS = {
+  "Алжир": "🇩🇿", "Гана": "🇬🇭", "Египет": "🇪🇬",
+  "Замбия": "🇿🇲", "Зимбабве": "🇿🇼", "Индия": "🇮🇳",
+  "Камерун": "🇨🇲", "Кения": "🇰🇪", "Колумбия": "🇨🇴",
+  "Кот-д’Ивуар": "🇨🇮", "Марокко": "🇲🇦",
+  "Нигерия": "🇳🇬", "Перу": "🇵🇪", "Руанда": "🇷🇼",
+  "Сенегал": "🇸🇳", "Экв. Гвинея": "🇬🇶", "ЮАР": "🇿🇦"
+};
+function flag(countryRu) { return (COUNTRY_FLAGS[countryRu] || "") + " "; }
+
+const layerMap = {};
+const markerMap = {};
 let activeChart = null;
+let activeFilters = { region: '', planner: '', fh: '' };
+let achvMode = false;
 
 function fmt(v, digits=0) {
   if (v == null || v === "") return "—";
@@ -297,6 +363,7 @@ function buildPopupHTML(p) {
     "Public": "Государственный",
     "Private": "Частный",
     "PPP": "ГЧП",
+    "Public-Private Partnership": "ГЧП",
     "Mixed": "Смешанный"
   }[p.planner] || p.planner || "—";
 
@@ -353,7 +420,7 @@ function buildPopupHTML(p) {
   return `
     <div class="popup-header" style="background:${color}">
       <div class="popup-title">${p.name_en}</div>
-      <div class="popup-sub">${p.country_ru||""} · ${p.region_ru||""}</div>
+      <div class="popup-sub">${flag(p.country_ru)}${p.country_ru||""} · ${p.region_ru||""}</div>
       <span class="popup-traj">${trajShort}</span>
     </div>
     <div class="popup-body">
@@ -448,6 +515,8 @@ GEOJSON.features.forEach(feature => {
       .setContent(popupHTML)
       .openOn(map);
     setTimeout(() => renderPopupChart(p), 50);
+    history.replaceState(null, '', '#' + p.layer);
+    highlightSidebarItem(p.layer);
   });
 
   layer.on('mouseover', function() {
@@ -512,11 +581,14 @@ function buildSidebar() {
       item.className = 'city-item';
       item.dataset.layer = p.layer;
       item.dataset.search = (p.name_en + ' ' + p.country_ru).toLowerCase();
+      item.dataset.region = p.region_ru || '';
+      item.dataset.planner = p.planner || '';
+      item.dataset.fh = p.fh_ru || '';
       item.innerHTML = `
         <input type="checkbox" checked data-layer="${p.layer}">
         <div>
           <div class="city-name">${p.name_en}</div>
-          <div class="city-country">${p.country_ru}</div>
+          <div class="city-country">${flag(p.country_ru)}${p.country_ru}</div>
         </div>
       `;
       item.querySelector('input').addEventListener('change', e => setVisible(p.layer, e.target.checked));
@@ -544,7 +616,20 @@ function zoomTo(layerName) {
   const entry = layerMap[layerName];
   if (!entry) return;
   if (!entry.visible) setVisible(layerName, true);
-  map.fitBounds(entry.leaflet.getBounds().pad(0.4));
+  const bounds = entry.leaflet.getBounds();
+  map.fitBounds(bounds.pad(0.4));
+  const center = bounds.getCenter();
+  setTimeout(() => {
+    L.popup({ maxWidth: 420 })
+      .setLatLng(center)
+      .setContent(buildPopupHTML(entry.props))
+      .openOn(map);
+    setTimeout(() => renderPopupChart(entry.props), 60);
+    history.replaceState(null, '', '#' + layerName);
+    highlightSidebarItem(layerName);
+  }, 350);
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar.classList.contains('open')) toggleSidebar();
 }
 
 function toggleAll(show) {
@@ -563,16 +648,95 @@ function translit(s) {
 }
 
 function filterCities(q) {
-  q = q.toLowerCase().trim();
-  const qt = translit(q);
-  document.querySelectorAll('.city-item').forEach(item => {
-    const s = item.dataset.search;
-    const match = !q || s.includes(q) || (qt !== q && s.includes(qt));
-    item.style.display = match ? '' : 'none';
-  });
+  applyFilters();
 }
 
 buildSidebar();
+
+// ── Фильтры ───────────────────────────────────────────────────────────────────
+document.querySelectorAll('#filter-bar .filter-chips').forEach(function(group) {
+  group.querySelectorAll('.chip').forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      group.querySelectorAll('.chip').forEach(function(c) { c.classList.remove('act'); });
+      chip.classList.add('act');
+      activeFilters[group.dataset.filter] = chip.dataset.val;
+      applyFilters();
+    });
+  });
+});
+
+function applyFilters() {
+  const searchQ = document.getElementById('search-box').value.toLowerCase().trim();
+  const searchQt = translit(searchQ);
+  document.querySelectorAll('.city-item').forEach(function(item) {
+    const matchSearch = !searchQ ||
+      item.dataset.search.includes(searchQ) ||
+      (searchQt !== searchQ && item.dataset.search.includes(searchQt));
+    const matchRegion  = !activeFilters.region  || item.dataset.region  === activeFilters.region;
+    const matchPlanner = !activeFilters.planner || item.dataset.planner === activeFilters.planner;
+    const matchFh      = !activeFilters.fh      || item.dataset.fh      === activeFilters.fh;
+    const visible = matchSearch && matchRegion && matchPlanner && matchFh;
+    item.style.display = visible ? '' : 'none';
+    const layerName = item.dataset.layer;
+    if (!layerName) return;
+    const checked = (item.querySelector('input[type=checkbox]') || {}).checked !== false;
+    const show = visible && checked;
+    const entry = layerMap[layerName];
+    if (entry) {
+      if (show && !map.hasLayer(entry.leaflet)) map.addLayer(entry.leaflet);
+      if (!show && map.hasLayer(entry.leaflet)) map.removeLayer(entry.leaflet);
+    }
+    const mk = markerMap[layerName];
+    if (mk) {
+      if (show) { try { clusterGroup.addLayer(mk); } catch(e){} }
+      else clusterGroup.removeLayer(mk);
+    }
+  });
+}
+
+function highlightSidebarItem(layerName) {
+  document.querySelectorAll('.city-item').forEach(function(i) { i.classList.remove('active'); });
+  const target = document.querySelector('.city-item[data-layer="' + layerName + '"]');
+  if (target) {
+    target.classList.add('active');
+    target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+}
+
+map.on('popupclose', function() {
+  history.replaceState(null, '', location.pathname + location.search);
+  document.querySelectorAll('.city-item').forEach(function(i) { i.classList.remove('active'); });
+});
+
+// ── Режим окраски по достижению цели ─────────────────────────────────────────
+function achvColor(ratio) {
+  if (ratio == null) return '#aaa';
+  if (ratio >= 0.30) return '#27ae60';
+  if (ratio >= 0.10) return '#f39c12';
+  return '#e74c3c';
+}
+
+function toggleAchvMode(on) {
+  achvMode = on;
+  Object.keys(layerMap).forEach(function(name) {
+    const entry = layerMap[name];
+    const c = on ? achvColor(entry.props.achv_ratio) : entry.props.color;
+    entry.leaflet.setStyle({ color: c, fillColor: c });
+  });
+  Object.keys(markerMap).forEach(function(name) {
+    const p = layerMap[name] && layerMap[name].props;
+    if (!p) return;
+    const c = on ? achvColor(p.achv_ratio) : p.color;
+    markerMap[name].setStyle({ fillColor: c });
+  });
+}
+
+// ── Deep-link по URL hash ─────────────────────────────────────────────────────
+(function() {
+  if (!location.hash) return;
+  const id = decodeURIComponent(location.hash.slice(1));
+  if (layerMap[id]) setTimeout(function() { zoomTo(id); }, 600);
+})();
 
 // ── Кластерные маркеры ────────────────────────────────────────────────────────
 const clusterGroup = L.markerClusterGroup({
@@ -633,20 +797,22 @@ GEOJSON.features.forEach(feature => {
   );
 
   marker.on('click', function(e) {
-    // Зум к полигону и открываем попап
     const entry = layerMap[p.layer];
     if (entry) {
       map.fitBounds(entry.leaflet.getBounds().pad(0.4));
       setTimeout(() => {
-        const popup = L.popup({ maxWidth: 420 })
+        L.popup({ maxWidth: 420 })
           .setLatLng(center)
           .setContent(buildPopupHTML(p))
           .openOn(map);
-        setTimeout(() => renderPopupChart(p), 50);
+        setTimeout(() => renderPopupChart(p), 60);
+        history.replaceState(null, '', '#' + p.layer);
+        highlightSidebarItem(p.layer);
       }, 400);
     }
   });
 
+  markerMap[p.layer] = marker;
   clusterGroup.addLayer(marker);
 });
 
