@@ -130,6 +130,14 @@
   .pop-source-list { font-size: 10px; color: #666; }
   .pop-source-list li { margin-bottom: 3px; line-height: 1.3; }
   .no-pop { font-size: 11px; color: #aaa; padding: 8px 0; }
+
+  .img-tabs { display: flex; gap: 4px; margin: 4px 0 6px; }
+  .img-tab {
+    padding: 3px 10px; border-radius: 4px; border: 1px solid #ccc;
+    background: #f5f5f5; font-size: 10px; cursor: pointer; color: #555;
+  }
+  .img-tab.active { background: #2c5282; color: #fff; border-color: #2c5282; }
+  .img-panel img { width: 100%; border-radius: 4px; display: block; margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -199,6 +207,10 @@ function fmt(v, digits=0) {
   if (typeof v === 'number') return digits > 0 ? v.toFixed(digits) : v.toLocaleString('ru-RU');
   return v;
 }
+function fmtYear(v) {
+  if (v == null || v === "") return "—";
+  return Math.round(v).toString();
+}
 function fmtPop(v) {
   if (v == null) return "—";
   if (v >= 1e6) return (v/1e6).toFixed(2) + " млн";
@@ -225,8 +237,8 @@ function buildPopupHTML(p) {
     <div class="popup-item"><div class="label">Регион</div><div class="value">${p.region_ru||"—"}</div></div>
     <div class="popup-item"><div class="label">Тип</div><div class="value">${focusRu}</div></div>
     <div class="popup-item"><div class="label">Организатор</div><div class="value">${plannerRu}</div></div>
-    <div class="popup-item"><div class="label">Анонс</div><div class="value">${fmt(p.announce)}</div></div>
-    <div class="popup-item"><div class="label">Начало стройки</div><div class="value">${fmt(p.start)}</div></div>
+    <div class="popup-item"><div class="label">Анонс</div><div class="value">${fmtYear(p.announce)}</div></div>
+    <div class="popup-item"><div class="label">Начало стройки</div><div class="value">${fmtYear(p.start)}</div></div>
     <div class="popup-item"><div class="label">Планируемое население</div><div class="value">${fmtPop(p.planned_pop)}</div></div>
     <div class="popup-item"><div class="label">Факт. население (2025)</div><div class="value">${fmtPop(p.pop_2025)}</div></div>
     <div class="popup-item"><div class="label">Доля достижения плана</div><div class="value">${p.achv_ratio != null ? (p.achv_ratio*100).toFixed(1)+"%" : "—"}</div></div>
@@ -243,9 +255,10 @@ function buildPopupHTML(p) {
   let popSection = "";
   if (p.pop_data && p.pop_data.length > 0) {
     const chartId = "chart_" + p.layer.replace(/[^a-z0-9]/gi,"_");
-    const srcList = p.pop_data.map(d =>
-      `<li><b>${d.year}:</b> ${fmtPop(d.pop)} — <i>${d.source}</i></li>`
-    ).join("");
+    const srcList = p.pop_data
+      .filter(d => d.source && !d.source.includes("Your file"))
+      .map(d => `<li><b>${d.year}:</b> ${fmtPop(d.pop)} — <i>${d.source}</i></li>`)
+      .join("");
     popSection = `
       <div class="section-title">Динамика населения</div>
       <div class="pop-chart-wrap"><canvas id="${chartId}"></canvas></div>
@@ -254,6 +267,17 @@ function buildPopupHTML(p) {
   } else {
     popSection = `<div class="section-title">Динамика населения</div><div class="no-pop">Данные не доступны</div>`;
   }
+
+  const uid = p.layer.replace(/[^a-z0-9]/gi,"_");
+  const mediaSection = `
+    <div class="section-title">Визуализация</div>
+    <div class="img-tabs">
+      <button class="img-tab active" onclick="switchImgTab(this,'dw_${uid}','viirs_${uid}')">Dynamic World</button>
+      <button class="img-tab"        onclick="switchImgTab(this,'viirs_${uid}','dw_${uid}')">VIIRS ночью</button>
+    </div>
+    <div id="dw_${uid}"   class="img-panel"><img src="dw/${p.layer}_temporal.png"  loading="lazy"></div>
+    <div id="viirs_${uid}" class="img-panel" style="display:none"><img src="viirs/${p.layer}_viirs.png" loading="lazy"></div>
+  `;
 
   return `
     <div class="popup-header" style="background:${color}">
@@ -265,8 +289,17 @@ function buildPopupHTML(p) {
       ${bboxWarn}
       <div class="popup-grid">${gridRows}</div>
       ${popSection}
+      ${mediaSection}
     </div>
   `;
+}
+
+function switchImgTab(btn, showId, hideId) {
+  const panel = btn.closest('.popup-body') || document.body;
+  panel.querySelectorAll('.img-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const s = document.getElementById(showId); if (s) s.style.display = '';
+  const h = document.getElementById(hideId); if (h) h.style.display = 'none';
 }
 
 function renderPopupChart(p) {
