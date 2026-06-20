@@ -156,10 +156,19 @@ const map = L.map('map', {
   center: [15, 25], zoom: 3,
   preferCanvas: false
 });
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  attribution: '© OpenStreetMap © CARTO',
-  subdomains: 'abcd', maxZoom: 19
-}).addTo(map);
+const baseLayers = {
+  "Светлая (Positron)": L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap © CARTO', subdomains: 'abcd', maxZoom: 19
+  }),
+  "Стандартная (OSM)": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors', maxZoom: 19
+  }),
+  "Спутник (Esri)": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: '© Esri, Maxar, Earthstar Geographics', maxZoom: 19
+  })
+};
+baseLayers["Светлая (Positron)"].addTo(map);
+L.control.layers(baseLayers, {}, { position: 'topright', collapsed: false }).addTo(map);
 
 // ── Слои ─────────────────────────────────────────────────────────────────────
 const layerMap = {};  // layer_name → L.geoJSON
