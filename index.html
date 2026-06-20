@@ -29,26 +29,26 @@
 </style>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #1a1a2e; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #FCF2E6; }
 
   #sidebar {
-    width: 280px; min-width: 220px; background: #16213e;
-    color: #e0e0e0; display: flex; flex-direction: column;
-    border-right: 1px solid #0f3460; z-index: 1000; overflow: hidden;
+    width: 280px; min-width: 220px; background: #FCF2E6;
+    color: #0F2D69; display: flex; flex-direction: column;
+    border-right: 2px solid #0F2D69; z-index: 1000; overflow: hidden;
   }
   #sidebar-header {
-    padding: 16px 14px 10px; background: #0f3460;
-    border-bottom: 1px solid #1a1a2e;
+    padding: 16px 14px 10px; background: #0F2D69;
+    border-bottom: 2px solid #960018;
   }
-  #sidebar-header h2 { font-size: 13px; font-weight: 700; color: #e0e0e0; line-height: 1.4; margin-bottom: 4px; }
-  #sidebar-header p { font-size: 10px; color: #a0a0c0; }
+  #sidebar-header h2 { font-size: 13px; font-weight: 700; color: #ffffff; line-height: 1.4; margin-bottom: 4px; }
+  #sidebar-header p { font-size: 10px; color: rgba(255,255,255,0.75); }
 
   #search-box {
     margin: 10px 10px 6px; padding: 6px 10px;
-    border-radius: 6px; border: 1px solid #2a3a6e;
-    background: #1a2a4e; color: #e0e0e0; font-size: 12px; width: calc(100% - 20px);
+    border-radius: 6px; border: 1px solid #0F2D69;
+    background: #fff; color: #0F2D69; font-size: 12px; width: calc(100% - 20px);
   }
-  #search-box::placeholder { color: #6080a0; }
+  #search-box::placeholder { color: #929292; }
 
   #layer-list { overflow-y: auto; flex: 1; padding: 4px 0 8px; }
 
@@ -56,9 +56,9 @@
   .traj-header {
     display: flex; align-items: center; gap: 6px;
     padding: 7px 12px 5px; cursor: pointer;
-    font-size: 11px; font-weight: 600; color: #c0c0d8;
-    user-select: none; background: #1e2e50;
-    border-top: 1px solid #0f3460;
+    font-size: 11px; font-weight: 600; color: #0F2D69;
+    user-select: none; background: #E6E6E6;
+    border-top: 1px solid #C6C6C6;
   }
   .traj-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
   .traj-check { margin-left: auto; width: 14px; height: 14px; cursor: pointer; }
@@ -66,26 +66,26 @@
 
   .city-item {
     display: flex; align-items: center; gap: 7px;
-    padding: 4px 12px 4px 22px; font-size: 11px; color: #b0b8d0;
+    padding: 4px 12px 4px 22px; font-size: 11px; color: #0F2D69;
     cursor: pointer; transition: background 0.15s;
   }
-  .city-item:hover { background: #1a2a4e; color: #e0e0ff; }
-  .city-item.active { background: #1a3a6e; color: #ffffff; }
+  .city-item:hover { background: rgba(15,45,105,0.08); color: #0F2D69; }
+  .city-item.active { background: rgba(150,0,24,0.12); color: #960018; }
   .city-item input[type=checkbox] { width: 12px; height: 12px; flex-shrink: 0; cursor: pointer; }
   .city-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .city-country { font-size: 9px; color: #6080a0; }
+  .city-country { font-size: 9px; color: #929292; }
 
   .all-toggle {
     display: flex; gap: 6px; padding: 8px 12px 4px;
-    font-size: 10px; color: #8090b0;
+    font-size: 10px; color: #929292;
   }
   .all-toggle button {
-    background: #1e2e50; border: 1px solid #2a3a6e; color: #a0b0d0;
+    background: #fff; border: 1px solid #C6C6C6; color: #0F2D69;
     padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 10px;
   }
-  .all-toggle button:hover { background: #2a3a6e; }
+  .all-toggle button:hover { background: #E6E6E6; }
 
-  #legend { padding: 10px 12px 8px; border-top: 1px solid #0f3460; font-size: 10px; color: #7080a0; }
+  #legend { padding: 10px 12px 8px; border-top: 1px solid #C6C6C6; font-size: 10px; color: #929292; }
   #legend .leg-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
   #legend .leg-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 
@@ -144,8 +144,32 @@
 
 <div id="sidebar">
   <div id="sidebar-header">
-    <h2>Новые плановые города мира<br>2000–2025</h2>
-    <p>45 greenfield-проектов &bull; Выборка КР НИУ ВШЭ</p>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+  <!-- ВШЭ логотип -->
+  <svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="18" cy="18" r="18" fill="#fff"/>
+    <circle cx="18" cy="18" r="17" fill="#0F2D69"/>
+    <text font-family="serif" font-size="18" font-weight="bold" fill="#fff"
+          text-anchor="middle" dominant-baseline="central" x="18" y="19">В</text>
+    <path id="arc" fill="none" d="M3,18 a15,15 0 1,1 30,0"/>
+    <text font-family="Arial" font-size="3.4" fill="#fff" letter-spacing="1">
+      <textPath href="#arc" startOffset="8%">ВЫСШАЯ • ШКОЛА • ЭКОНОМИКИ</textPath>
+    </text>
+  </svg>
+  <!-- ФГРР логотип (упрощённый шестигранник) -->
+  <svg width="90" height="36" viewBox="0 0 90 36" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="14,2 26,2 32,13 26,24 14,24 8,13" fill="#0F2D69"/>
+    <polygon points="14,2 26,2 32,13" fill="#7B5EA7"/>
+    <polygon points="14,2 8,13 14,24 20,13" fill="#9B7BC8"/>
+    <polygon points="20,13 26,2 32,13 26,24" fill="#7B5EA7"/>
+    <circle cx="20" cy="13" r="2" fill="#fff"/>
+    <text font-family="Arial" font-size="7.5" fill="#fff" x="37" y="11" font-weight="600">Факультет</text>
+    <text font-family="Arial" font-size="7.5" fill="#fff" x="37" y="20">городского и</text>
+    <text font-family="Arial" font-size="7.5" fill="#fff" x="37" y="29">регион. развития</text>
+  </svg>
+</div>
+  <h2>Новые плановые города мира<br>2000–2025</h2>
+    <p>45 проектов «с нуля» &bull; «Плановые города зарубежных стран: феномен и сравнительный анализ» &mdash; Силантьева К.К., БГП222</p>
   </div>
   <input id="search-box" type="text" placeholder="Поиск города..." oninput="filterCities(this.value)">
   <div class="all-toggle">
