@@ -499,10 +499,22 @@ function toggleAll(show) {
   document.querySelectorAll('.city-item input, .traj-check').forEach(cb => cb.checked = show);
 }
 
+const TRANSLIT = {
+  'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'yo','ж':'zh',
+  'з':'z','и':'i','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o',
+  'п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'kh','ц':'ts',
+  'ч':'ch','ш':'sh','щ':'shch','ы':'y','э':'e','ю':'yu','я':'ya','ъ':'','ь':''
+};
+function translit(s) {
+  return s.toLowerCase().split('').map(c => TRANSLIT[c] ?? c).join('');
+}
+
 function filterCities(q) {
   q = q.toLowerCase().trim();
+  const qt = translit(q);
   document.querySelectorAll('.city-item').forEach(item => {
-    const match = !q || item.dataset.search.includes(q);
+    const s = item.dataset.search;
+    const match = !q || s.includes(q) || (qt !== q && s.includes(qt));
     item.style.display = match ? '' : 'none';
   });
 }
