@@ -10,8 +10,6 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0/dist/chartjs-plugin-annotation.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
@@ -149,10 +147,6 @@
   .section-title { font-size: 10px; font-weight: 700; color: #555; text-transform: uppercase;
     letter-spacing: 0.8px; margin: 10px 0 6px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
 
-  .pop-chart-wrap { height: 140px; margin-bottom: 10px; position: relative; }
-  .pop-source-list { font-size: 10px; color: #666; }
-  .pop-source-list li { margin-bottom: 3px; line-height: 1.3; }
-  .no-pop { font-size: 11px; color: #aaa; padding: 8px 0; }
 
   .img-tabs { display: flex; gap: 4px; margin: 4px 0 6px; }
   .img-tab {
@@ -325,7 +319,6 @@ function flag(countryRu) { return (COUNTRY_FLAGS[countryRu] || "") + " "; }
 
 const layerMap = {};
 const markerMap = {};
-let activeChart = null;
 let activeFilters = { region: '', planner: '', fh: '' };
 let achvMode = false;
 
@@ -390,22 +383,6 @@ function buildPopupHTML(p) {
   const bboxWarn = p.is_bbox
     ? `<div class="bbox-warn">⚠ Граница приближённая (прямоугольный контур)</div>` : "";
 
-  // Население
-  let popSection = "";
-  if (p.pop_data && p.pop_data.length > 0) {
-    const chartId = "chart_" + p.layer.replace(/[^a-z0-9]/gi,"_");
-    const srcList = p.pop_data
-      .filter(d => d.source && !d.source.includes("Your file"))
-      .map(d => `<li><b>${d.year}:</b> ${fmtPop(d.pop)} — <i>${d.source}</i></li>`)
-      .join("");
-    popSection = `
-      <div class="section-title">Динамика населения</div>
-      <div class="pop-chart-wrap"><canvas id="${chartId}"></canvas></div>
-      <ul class="pop-source-list">${srcList}</ul>
-    `;
-  } else {
-    popSection = `<div class="section-title">Динамика населения</div><div class="no-pop">Данные не доступны</div>`;
-  }
 
   const uid = p.layer.replace(/[^a-z0-9]/gi,"_");
   const mediaSection = `
@@ -427,7 +404,6 @@ function buildPopupHTML(p) {
     <div class="popup-body">
       ${bboxWarn}
       <div class="popup-grid">${gridRows}</div>
-      ${popSection}
       ${mediaSection}
     </div>
   `;
@@ -441,60 +417,6 @@ function switchImgTab(btn, showId, hideId) {
   const h = document.getElementById(hideId); if (h) h.style.display = 'none';
 }
 
-function renderPopupChart(p) {
-  if (!p.pop_data || p.pop_data.length === 0) return;
-  const chartId = "chart_" + p.layer.replace(/[^a-z0-9]/gi,"_");
-  const canvas = document.getElementById(chartId);
-  if (!canvas) return;
-
-  const numericPoints = p.pop_data
-    .filter(d => d.year !== "Planned" && d.pop != null && !isNaN(parseInt(d.year)))
-    .sort((a,b) => parseInt(a.year)-parseInt(b.year));
-
-  const plannedPop = p.planned_pop;
-  const labels = numericPoints.map(d => d.year);
-  const values = numericPoints.map(d => d.pop);
-
-  if (activeChart) { activeChart.destroy(); activeChart = null; }
-  activeChart = new Chart(canvas, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Население (факт.)',
-        data: values,
-        backgroundColor: p.color + 'aa',
-        borderColor: p.color,
-        borderWidth: 1,
-        borderRadius: 3,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => fmtPop(ctx.raw)
-          }
-        },
-        annotation: plannedPop ? {
-          annotations: {
-            planned: {
-              type: 'line', yMin: plannedPop, yMax: plannedPop,
-              borderColor: '#e74c3c', borderWidth: 1, borderDash: [4,3],
-              label: { content: 'Планируемое', display: true, position: 'end', font: {size:9} }
-            }
-          }
-        } : {}
-      },
-      scales: {
-        x: { ticks: { font: {size:9} }, grid: {display:false} },
-        y: { ticks: { font: {size:9}, callback: v => fmtPop(v) }, grid: {color:'#f0f0f0'} }
-      }
-    }
-  });
-}
 
 // ── Создаём слои ──────────────────────────────────────────────────────────────
 GEOJSON.features.forEach(feature => {
@@ -515,7 +437,6 @@ GEOJSON.features.forEach(feature => {
       .setLatLng(e.latlng)
       .setContent(popupHTML)
       .openOn(map);
-    setTimeout(() => renderPopupChart(p), 50);
     history.replaceState(null, '', '#' + p.layer);
     highlightSidebarItem(p.layer);
   });
@@ -625,7 +546,6 @@ function zoomTo(layerName) {
       .setLatLng(center)
       .setContent(buildPopupHTML(entry.props))
       .openOn(map);
-    setTimeout(() => renderPopupChart(entry.props), 60);
     history.replaceState(null, '', '#' + layerName);
     highlightSidebarItem(layerName);
   }, 350);
@@ -806,7 +726,6 @@ GEOJSON.features.forEach(feature => {
           .setLatLng(center)
           .setContent(buildPopupHTML(p))
           .openOn(map);
-        setTimeout(() => renderPopupChart(p), 60);
         history.replaceState(null, '', '#' + p.layer);
         highlightSidebarItem(p.layer);
       }, 400);
