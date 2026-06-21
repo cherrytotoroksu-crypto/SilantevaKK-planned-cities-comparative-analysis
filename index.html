@@ -170,13 +170,11 @@
   }
   .chip:hover { border-color: #0F2D69; background: #E6EAF4; }
   .chip.act { background: #0F2D69; color: #fff; border-color: #0F2D69; }
-  #achv-toggle-row { margin-top: 6px; padding-top: 6px; border-top: 1px solid #ddd; }
-  #achv-toggle-row label { font-size: 10px; color: #555; cursor: pointer; display: flex; align-items: center; gap: 4px; }
   @media (prefers-color-scheme: dark) {
     #filter-bar { background: #FCF2E6 !important; }
     .chip { background: #fff !important; color: #0F2D69 !important; border-color: #C6C6C6 !important; }
     .chip.act { background: #0F2D69 !important; color: #fff !important; }
-    #achv-toggle-row label { color: #444 !important; }
+
   }
 
   /* ── Кнопка-гамбургер (скрыта на десктопе) ─────────────────────────────── */
@@ -265,7 +263,7 @@
     <div class="leg-row"><div class="leg-dot" style="background:#2980b9"></div> Активно формирующиеся</div>
     <div class="leg-row"><div class="leg-dot" style="background:#f39c12"></div> Ранняя стадия</div>
     <div class="leg-row"><div class="leg-dot" style="background:#e74c3c"></div> Символические</div>
-    <div id="achv-toggle-row"><label><input type="checkbox" id="achv-toggle" onchange="toggleAchvMode(this.checked)"> Цвет по достижению цели</label></div>
+
   </div>
 </div>
 
@@ -320,7 +318,7 @@ function flag(countryRu) { return (COUNTRY_FLAGS[countryRu] || "") + " "; }
 const layerMap = {};
 const markerMap = {};
 let activeFilters = { region: '', planner: '', fh: '' };
-let achvMode = false;
+
 
 function fmt(v, digits=0) {
   if (v == null || v === "") return "—";
@@ -628,29 +626,6 @@ map.on('popupclose', function() {
   history.replaceState(null, '', location.pathname + location.search);
   document.querySelectorAll('.city-item').forEach(function(i) { i.classList.remove('active'); });
 });
-
-// ── Режим окраски по достижению цели ─────────────────────────────────────────
-function achvColor(ratio) {
-  if (ratio == null) return '#aaa';
-  if (ratio >= 0.30) return '#27ae60';
-  if (ratio >= 0.10) return '#f39c12';
-  return '#e74c3c';
-}
-
-function toggleAchvMode(on) {
-  achvMode = on;
-  Object.keys(layerMap).forEach(function(name) {
-    const entry = layerMap[name];
-    const c = on ? achvColor(entry.props.achv_ratio) : entry.props.color;
-    entry.leaflet.setStyle({ color: c, fillColor: c });
-  });
-  Object.keys(markerMap).forEach(function(name) {
-    const p = layerMap[name] && layerMap[name].props;
-    if (!p) return;
-    const c = on ? achvColor(p.achv_ratio) : p.color;
-    markerMap[name].setStyle({ fillColor: c });
-  });
-}
 
 // ── Deep-link по URL hash ─────────────────────────────────────────────────────
 (function() {
